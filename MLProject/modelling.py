@@ -13,6 +13,19 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 
+def find_dataset(filename="heart_processed.csv"):
+    possible_paths = [
+        filename,
+        os.path.join("dataset_preprocessing", filename),
+        os.path.join("..", "dataset_preprocessing", filename),
+        os.path.join("..", filename)
+    ]
+    for p in possible_paths:
+        if os.path.exists(p):
+            return p
+    raise FileNotFoundError(f"Processed dataset '{filename}' tidak ditemukan di lokasi: {possible_paths}")
+
+
 def main():
     os.environ["MLFLOW_ALLOW_FILE_STORE"] = "true"
     parser = argparse.ArgumentParser()
@@ -23,10 +36,7 @@ def main():
     mlflow.set_tracking_uri("file:./mlruns")
     mlflow.set_experiment("Heart_Disease_CI_Bryan")
 
-    dataset_path = "heart_processed.csv"
-    if not os.path.exists(dataset_path):
-        dataset_path = "../heart_processed.csv"
-
+    dataset_path = find_dataset("heart_processed.csv")
     df = pd.read_csv(dataset_path)
     X = df.drop(columns=["target"])
     y = df["target"]
