@@ -28,6 +28,13 @@ def find_dataset(filename="heart_processed.csv"):
 
 def main():
     os.environ["MLFLOW_ALLOW_FILE_STORE"] = "true"
+
+    # Jika dipanggil via `mlflow run`, mlruns berada di parent directory
+    if "MLFLOW_RUN_ID" in os.environ and os.path.exists("../mlruns"):
+        mlflow.set_tracking_uri("file:../mlruns")
+    else:
+        mlflow.set_tracking_uri("file:./mlruns")
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--n_estimators", type=int, default=100)
     parser.add_argument("--max_depth", type=int, default=5)
@@ -53,25 +60,13 @@ def main():
     rec = recall_score(y_test, y_pred)
     f1 = f1_score(y_test, y_pred)
 
-    if mlflow.active_run():
-        mlflow.log_param("n_estimators", args.n_estimators)
-        mlflow.log_param("max_depth", args.max_depth)
-        mlflow.log_metric("accuracy", acc)
-        mlflow.log_metric("precision", prec)
-        mlflow.log_metric("recall", rec)
-        mlflow.log_metric("f1_score", f1)
-        mlflow.sklearn.log_model(model, artifact_path="model")
-    else:
-        mlflow.set_tracking_uri("file:./mlruns")
-        mlflow.set_experiment("Heart_Disease_CI_Bryan")
-        with mlflow.start_run(run_name="CI_Retrain_RandomForest"):
-            mlflow.log_param("n_estimators", args.n_estimators)
-            mlflow.log_param("max_depth", args.max_depth)
-            mlflow.log_metric("accuracy", acc)
-            mlflow.log_metric("precision", prec)
-            mlflow.log_metric("recall", rec)
-            mlflow.log_metric("f1_score", f1)
-            mlflow.sklearn.log_model(model, artifact_path="model")
+    mlflow.log_param("n_estimators", args.n_estimators)
+    mlflow.log_param("max_depth", args.max_depth)
+    mlflow.log_metric("accuracy", acc)
+    mlflow.log_metric("precision", prec)
+    mlflow.log_metric("recall", rec)
+    mlflow.log_metric("f1_score", f1)
+    mlflow.sklearn.log_model(model, artifact_path="model")
 
     print(f"[CI RETRAIN SUCCESS] Accuracy: {acc:.4f}, F1-Score: {f1:.4f}")
 
